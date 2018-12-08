@@ -164,7 +164,7 @@ class Loader_File(Loader):
         Generic file load.
         """
         if not os.path.exists(self._dst): return 
-        SlicerUtils.loadNodeFromFile(self._dst)
+        slicer.util.loadVolume(self._dst)
 
 
 
