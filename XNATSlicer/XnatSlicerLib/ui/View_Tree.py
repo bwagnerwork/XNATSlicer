@@ -292,7 +292,7 @@ class View_Tree(View, qt.QTreeWidget):
             self.sortItems(index, self.columnSorts[index])
             
         header = self.header()
-        header.setClickable(True)
+        header.setSectionsClickable(True)
         header.connect('sectionClicked(int)', onHeaderClicked)
                 
 
