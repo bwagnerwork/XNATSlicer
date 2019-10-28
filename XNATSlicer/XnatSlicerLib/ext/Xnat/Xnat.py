@@ -778,9 +778,9 @@ class Xnat(object):
             # A ':' indicates the port...
             #-------------------- 
             if ':' in host:
-                connection = httplib.HTTPConnection(host)
+                connection = httplib.HTTPSConnection(host)
             else:
-                connection = httplib.HTTPSConnection(host) 
+                connection = httplib.HTTPConnection(host) 
 
             header = dict(self.authHeader.items() + headerAdditions.items())
 
