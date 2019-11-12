@@ -170,7 +170,18 @@ class SlicerUtils(object):
         p.detailsPopup.open()        
 
 
-
+    @staticmethod
+    def bcw_clean_windows_filename(filename):
+      """Cleans a path to a windows shortname (8.3)
+      """
+      if os.name=='nt':
+        old_name = filename
+        filename = os.path.normpath(filename)
+        if len(filename) > 260:
+          filename = '\\\\?\\' + filename
+        print('Windows Filename (len = {}) : {}'.format(len(old_name), old_name))
+        print('DOS Filename     (len = {}) : {}'.format(len(filename), filename))
+      return filename
 
     class MrmlParser(object):
         """ 
@@ -218,8 +229,8 @@ class SlicerUtils(object):
             #------------------------
             # Init xml parser
             #------------------------
-            
-            mrmlFile = codecs.open(filename, encoding="UTF-8", errors='ignore')
+            filename_safe = SlicerUtils.bcw_clean_windows_filename(filename)
+            mrmlFile = codecs.open(filename_safe, encoding="UTF-8", errors='ignore')
             mrmlText = mrmlFile.read()
             elementTree = ET.ElementTree(ET.fromstring(mrmlText))
             root = elementTree.getroot()
@@ -248,7 +259,8 @@ class SlicerUtils(object):
             #------------------------
             # write new mrml
             #------------------------
-            elementTree.write(newFilename)     
+            newFilename_safe = SlicerUtils.bcw_clean_windows_filename(newFilename)
+            elementTree.write(newFilename_safe)
             #root.write(newFilename)     
 
 
@@ -289,5 +301,3 @@ class SlicerUtils(object):
                         #word = word.strip() 
                         f.write(word + '\n')
             f.close()
-
-
