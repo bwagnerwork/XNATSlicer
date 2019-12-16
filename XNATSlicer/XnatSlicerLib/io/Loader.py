@@ -58,7 +58,8 @@ class Loader(object):
         self.fileUris = fileUris
         self.useCached = None
         self._dstBase = XnatSlicerGlobals.LOCAL_URIS['downloads']
-        
+        self.hashpath = ''
+        self.sidecar = ''
 
         
     @property
