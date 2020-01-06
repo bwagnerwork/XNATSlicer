@@ -17,7 +17,7 @@ from XnatSlicerGlobals import *
 from XnatSlicerUtils import *
 from Loader import *
 from SlicerUtils import *
-
+import hashlib
 
 
 class Loader_Mrb(Loader_File):
@@ -125,9 +125,13 @@ class Loader_Mrb(Loader_File):
         @rtype: str
         """
         
-        slicerCache = os.path.join(XnatSlicerGlobals.LOCAL_URIS['downloads'], 
+
+        self.hashpath = os.path.join(XnatSlicerGlobals.LOCAL_URIS['downloads'], 
                                    'projects' + os.path.dirname(remoteUri.split('projects')[1]))
-        return os.path.join(slicerCache, os.path.basename(remoteUri).rsplit('.', 1)[0])
+        hash = hashlib.md5(self.hashpath.encode('utf-8')).hexdigest()
+        slicerCache = os.path.join(self._dstBase, "projects", hash, 'data')
+        self.sidecar = os.path.join(self._dstBase, "projects", hash, "sidecar.json")
+        return slicerCache #os.path.join(slicerCache, os.path.basename(remoteUri).rsplit('.', 1)[0])
         
 
     

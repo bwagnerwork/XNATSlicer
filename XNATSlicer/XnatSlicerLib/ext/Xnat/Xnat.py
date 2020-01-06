@@ -15,7 +15,7 @@ import base64
 import urlparse
 import httplib
 import json
-
+import re
 
 
 class Xnat(object):
@@ -777,7 +777,7 @@ class Xnat(object):
             #
             # A ':' indicates the port...
             #-------------------- 
-            if ':' in host:
+            if re.search('^https', _uri):
                 connection = httplib.HTTPSConnection(host)
             else:
                 connection = httplib.HTTPConnection(host) 
