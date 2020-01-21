@@ -29,22 +29,22 @@ from XnatSlicerUtils import *
 
 
 class Workflow_Load(object):
-    """ 
-    Workflow_Load is effectively a factory for various loader classes.  
-    Loader types are determined by the View item being clicked in the 
-    Workflow_Load function 'beginWorkflow'.  
-    
-    Parent Load workflow class to: XnatDicomWorkflow_Load, 
+    """
+    Workflow_Load is effectively a factory for various loader classes.
+    Loader types are determined by the View item being clicked in the
+    Workflow_Load function 'beginWorkflow'.
+
+    Parent Load workflow class to: XnatDicomWorkflow_Load,
     XnatMrbWorkflow_Load, and XnatFileWorkflow_Load.
     """
 
-    
+
     def __init__(self, MODULE):
-        """ 
+        """
         @param MODULE: The XNATSlicer module.
         @type MODULE: XnatSlicerWidget
         """
-        self.MODULE = MODULE       
+        self.MODULE = MODULE
         self.loadFile = None
         self.newMRMLFile = None
         self.currRemoteHost = None
@@ -54,13 +54,13 @@ class Workflow_Load(object):
         self._src = None
         self.loaders = {}
 
-        
+
         #--------------------------------
         # Popups
         #--------------------------------
         self.areYouSureDialog = qt.QMessageBox()
         self.areYouSureDialog.setIcon(4)
-        self.areYouSureDialog.setText("You are about to load all readable scans from '**HERE**'.\n" +  
+        self.areYouSureDialog.setText("You are about to load all readable scans from '**HERE**'.\n" +
                                       "This may take several minutes.\n" +
                                       "Are you sure you want to continue?")
         self.areYouSureDialog.addButton(qt.QMessageBox.Yes)
@@ -71,9 +71,9 @@ class Workflow_Load(object):
 
         self.XnatDownloadPopup = XnatDownloadPopup()
         self.XnatDownloadPopup.setCancelCallback(self.MODULE.XnatIo.cancelDownload)
-        
+
         self.clearScenePopup = XnatClearScenePopup()
-        self.clearScenePopup.connect('buttonClicked(QAbstractButton*)', self.__clearSceneButtonClicked) 
+        self.clearScenePopup.connect('buttonClicked(QAbstractButton*)', self.__clearSceneButtonClicked)
 
         self.preDownloadPopup = XnatTextPopup('<b>Checking files...</b>')
         self.postDownloadPopup = XnatTextPopup('<b>Processing.  Data will load automatically.</b>')
@@ -82,7 +82,7 @@ class Workflow_Load(object):
 
     def __sortLoadablesByType(self, fileUris):
         """
-        Sorts a list of file uris by XNATSlicer loadable types.  Generally used 
+        Sorts a list of file uris by XNATSlicer loadable types.  Generally used
         when multi-folder downloading is in effect.
 
         @param fileUris: The list of iles to sort..
@@ -91,7 +91,7 @@ class Workflow_Load(object):
         @return: A dictionary where each key specifies the loadable type.
         @rtype: dict
         """
-        
+
         filesByType = {
             'analyze': [],
             'dicom': [],
@@ -115,7 +115,7 @@ class Workflow_Load(object):
 
 
     def __resetIOCallbacks(self):
-        """ 
+        """
         Clears and sets the IO callbacks for the MODULE.XnatIO.
         Callbacks labeleled accordingly.
         """
@@ -133,11 +133,12 @@ class Workflow_Load(object):
         def downloadStarted(_xnatSrc, size = 0):
             #print "\n\nDOWNLOAD START", self.XnatDownloadPopup.downloadRows, "\n\n"
             #if size > 0:
+            print("########## size = %d ###########" % size)
             self.XnatDownloadPopup.setSize(_xnatSrc.split('?format=zip')[0], size)
             slicer.app.processEvents()
         self.MODULE.XnatIo.onEvent('downloadStarted', downloadStarted)
 
-        
+
 
         #--------------------------------
         # Downloading
@@ -147,7 +148,7 @@ class Workflow_Load(object):
             slicer.app.processEvents()
         self.MODULE.XnatIo.onEvent('downloading', downloading)
 
-        
+
 
         #--------------------------------
         # FINISHED
@@ -166,14 +167,14 @@ class Workflow_Load(object):
         # CANCELLED
         #--------------------------------
         def downloadCancelled(_xnatSrc, *args):
-            
+
             #
             # Update the popup
             #
             self.XnatDownloadPopup.setCancelled(_xnatSrc.split('?format=zip')[0])
 
             #
-            # Set loader to None if it pertains to the 
+            # Set loader to None if it pertains to the
             # cancelled download
             #
             for key, loader in self.loaders.iteritems():
@@ -191,11 +192,11 @@ class Workflow_Load(object):
         #--------------------------------
         self.MODULE.XnatIo.onEvent('downloadFailed', downloadCancelled)
 
-        
-        
-    
+
+
+
     def terminateLoad(self, *warnStrs):
-        """ 
+        """
         Notifies the user that they will terminate the load.
         Reenables the viewer UI.
 
@@ -216,15 +217,15 @@ class Workflow_Load(object):
         if 'yes' in button.text.lower():
             self.MODULE.View.sessionManager.clearCurrentSession()
             slicer.app.mrmlScene().Clear(0)
-        
+
         self.skipEmptySceneCheck = True
         self.beginWorkflow()
-            
 
-            
+
+
 
     def beginWorkflow(self, src = None):
-        """ 
+        """
         This function is the first to be called
         when the user clicks on the "load" button (right arrow).
         The class that calls 'beginWorkflow' has no idea of the
@@ -232,7 +233,7 @@ class Workflow_Load(object):
         the given XNAT node.  Those classes (which inherit from
         Workflow_Load) will be called on in this function.
 
-        @param src: The optional src file 
+        @param src: The optional src file
         @type src: str
         """
 
@@ -241,7 +242,7 @@ class Workflow_Load(object):
             self._src = src
         self._src = Xnat.path.makeXnatUrl(self.MODULE.XnatIo.host, self._src)
 
-            
+
         #------------------------
         # Show clearSceneDialog
         #------------------------
@@ -250,7 +251,7 @@ class Workflow_Load(object):
             self._src = splitter[0] + '/scans/' + splitter[1].split('/')[0] + '/files'
 
 
-            
+
         #------------------------
         # Show clearSceneDialog
         #------------------------
@@ -259,17 +260,17 @@ class Workflow_Load(object):
             return
 
 
-    
-        #------------------------    
+
+        #------------------------
         # Clear download queue
         #------------------------
         self.__resetIOCallbacks()
 
-        
+
 
         #------------------------
         # Set Download finished callbacks
-        #------------------------        
+        #------------------------
         def onDownloadFinished():
             self.XnatDownloadPopup.hide()
             self.postDownloadPopup.show()
@@ -283,99 +284,100 @@ class Workflow_Load(object):
             self.MODULE.XnatIo.clearDownloadQueue()
             self.loaders = {}
 
-            
-        
+
+
         #------------------------
         # Show download popup
-        #------------------------  
+        #------------------------
         #print "Initializing download..."
         self.preDownloadPopup.show()
 
 
-        
+
         #------------------------
         # Get loaders, add to queue
-        #------------------------  
+        #------------------------
         for loader in self.loaderFactory(self._src):
             if not loader.useCached:
                 self.MODULE.XnatIo.addToDownloadQueue(loader.loadArgs['src'], loader.loadArgs['dst'])
             self.loaders[loader.loadArgs['src']] = loader
-                         
 
 
-            
+
+
         #------------------------
         # Run loaders
-        #------------------------ 
+        #------------------------
         self.preDownloadPopup.hide()
         self.XnatDownloadPopup.show()
         self.MODULE.XnatIo.onEvent('downloadQueueFinished', onDownloadFinished)
         self.MODULE.XnatIo.startDownloadQueue()
-      
 
-        
+
+
         #------------------------
         # Enable View
         #------------------------
         self.MODULE.View.setEnabled(True)
         self.lastButtonClicked = None
-    
 
 
-        
+
+
     def loaderFactory(self, _src):
-        """ 
+        """
         Returns the appropriate set of loaders after analyzing the
         '_src' argument.
-        
+
         @param _src: The URI to create loaders from.
         @type _src: str
-        
+
         @return: The loader list.
         @rtype: list(Loader)
-            
+
         """
 
         #print "\n\nLOADER FACTORY"
         loaders = []
 
 
-        
+
         #------------------------
         # Open popup
         #------------------------
         if '/scans/' in _src or '/files/' in _src:
             #print "OPENING POPUP ROW", _src
+            print("######## _src = %s ########" % _src )
             self.XnatDownloadPopup.addDownloadRow(_src)
             #print self.XnatDownloadPopup.downloadRows
-            
 
 
-            
-            
+
+
+
         #------------------------
-        # '/files/' LEVEL 
+        # '/files/' LEVEL
         #------------------------
         if '/files/' in _src:
-            
+
             # MRB
             if '/Slicer/files/' in _src:
                 #print "FOUND SLICER FILE"
                 loaders.append(Loader_Mrb(self.MODULE, _src))
-                
+
 
 
 
         #------------------------
-        # '/scans/' LEVEL 
-        # 
+        # '/scans/' LEVEL
+        #
         # Basically, look at the contents of the scan folder
         # and return the appropriate loader
         #------------------------
         elif '/scans/' in _src:
 
             # uri manipulation
-            splitScan =  _src.split('/scans/')   
+            splitScan =  _src.split('/scans/')
             scanSrc = splitScan[0] + '/scans/' + splitScan[1].split('/')[0] + '/files'
             #print "SPLIT SCAN:", splitScan, '\n\t',scanSrc
             # query xnat for folder contents
@@ -390,17 +392,17 @@ class Workflow_Load(object):
                 if len(loadableList) > 0:
                     if loadableType == 'analyze':
                         loaders.append(Loader_Analyze(self.MODULE, _src, loadables[loadableType]))
-                    if loadableType == 'dicom':      
+                    if loadableType == 'dicom':
                         loaders.append(Loader_Dicom(self.MODULE, _src, loadables[loadableType]))
                     if loadableType == 'misc':
                         loaders.append(Loader_File(self.MODULE, _src, loadables[loadableType]))
 
 
-                        
+
         #------------------------
-        # '/experiments/' LEVEL 
+        # '/experiments/' LEVEL
         #
-        # Basically, recurse this function after querying for the 
+        # Basically, recurse this function after querying for the
         # scans in it.
         #------------------------
         elif '/experiments/' in _src and not '/scans/' in _src and not '/resources/' in _src:
@@ -413,7 +415,7 @@ class Workflow_Load(object):
             contents = self.MODULE.XnatIo.getFolder(exptSrc, metadata = ['ID'])
             #print "SCAN IDS", contents
             # Recurse this function for every scan.
-            
+
             if 'ID' in contents:
                 for scanId in contents['ID']:
                     scanSrc = exptSrc + '/' + scanId + '/files'
@@ -422,6 +424,6 @@ class Workflow_Load(object):
 
             # Return loaders
             return loaders
-                
-            
+
+
         return loaders
